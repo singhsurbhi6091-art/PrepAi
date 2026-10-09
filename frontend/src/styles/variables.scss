@@ -1,0 +1,80 @@
+// PrepAI — Single source of truth for all design tokens
+// Sirf yahan change karo — puri app update ho jaayegi
+
+// ── Brand colors ──────────────────────────────────────────
+$accent:        #4F46E5;
+$accent-hover:  #4338CA;
+$accent-soft:   #EEF2FF;
+$accent-text:   #3730A3;
+
+$green:         #059669;
+$green-soft:    #ECFDF5;
+$green-text:    #065F46;
+
+$amber:         #D97706;
+$amber-soft:    #FFFBEB;
+$amber-text:    #92400E;
+
+$red:           #DC2626;
+$red-soft:      #FEF2F2;
+$red-text:      #991B1B;
+
+// ── Neutrals ──────────────────────────────────────────────
+$ink:           #0D0D0F;
+$mid:           #6B6B7B;
+$muted:         #9999A8;
+$border:        #E4E4EC;
+$border-2:      #CCCCD8;
+$surface:       #F7F7FA;
+$white:         #FFFFFF;
+
+// ── Typography ────────────────────────────────────────────
+$font-display:  'Instrument Serif', Georgia, serif;
+$font-body:     'DM Sans', system-ui, sans-serif;
+$font-mono:     'JetBrains Mono', monospace;
+
+$text-xs:       0.75rem;
+$text-sm:       0.875rem;
+$text-md:       1rem;
+$text-lg:       1.125rem;
+$text-xl:       1.375rem;
+$text-2xl:      1.75rem;
+$text-3xl:      2.25rem;
+
+// ── Spacing ───────────────────────────────────────────────
+$space-1:   0.25rem;
+$space-2:   0.5rem;
+$space-3:   0.75rem;
+$space-4:   1rem;
+$space-5:   1.25rem;
+$space-6:   1.5rem;
+$space-8:   2rem;
+$space-10:  2.5rem;
+$space-12:  3rem;
+
+// ── Radius ────────────────────────────────────────────────
+$radius-sm:  6px;
+$radius-md:  10px;
+$radius-lg:  14px;
+$radius-xl:  20px;
+$radius-full: 999px;
+
+// ── Shadows ───────────────────────────────────────────────
+$shadow-sm:  0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+$shadow-md:  0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+$shadow-lg:  0 12px 32px rgba(0,0,0,0.10), 0 4px 8px rgba(0,0,0,0.05);
+
+// ── Transitions ───────────────────────────────────────────
+$transition: 180ms ease;
+
+// ── Breakpoints ───────────────────────────────────────────
+$mobile:   480px;
+$tablet:   768px;
+$desktop:  1024px;
+$wide:     1280px;
+
+// ── Z-index scale ─────────────────────────────────────────
+$z-base:    1;
+$z-sticky:  100;
+$z-modal:   200;
+$z-toast:   300;

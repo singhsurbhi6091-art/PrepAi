@@ -1,0 +1,272 @@
+const userModel = require('../models/user.model');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const Blacklist = require('../models/blacklist.model');
+const config = require('../config/config');
+// TOP mein add karo — ye line missing hai
+const Company = require('../models/company.model');
+const logger = require('../config/logger');
+
+const cookieOptions = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'Strict'
+};
+
+const generateTokens = (userId) => {
+    const token = jwt.sign(
+        { id: userId },
+        config.JWT_SECRET,
+        { expiresIn: '1h' }
+    );
+    const refreshToken = jwt.sign(
+        { id: userId },
+        config.JWT_REFRESH_SECRET,         // alag secret
+        { expiresIn: '7d' }
+    );
+    return { token, refreshToken };
+};
+
+exports.registerUser = async (req, res) => {
+    const { name, email, password } = req.body;
+    try {
+        const existingUser = await userModel.findOne({ email });
+        if (existingUser) {
+            return res.status(400).json({ message: 'User already exists' });
+        }
+
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+
+        const user = await userModel.create({ name, email, password: hashedPassword });
+        const { token, refreshToken } = generateTokens(user._id);
+
+        res.cookie('token', token, cookieOptions);
+        res.cookie('refreshToken', refreshToken, cookieOptions);
+
+        res.status(201).json({
+            message: 'User registered successfully',
+            user: { id: user._id, name: user.name, email: user.email },
+            token,
+            refreshToken
+        });
+    } catch (err) {
+        logger.error(`Error registering user: ${err.message}`);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+// auth.controller.js loginUser mein fix karo
+exports.loginUser = async (req, res) => {
+    const { email, password } = req.body;
+    try {
+        const user = await userModel.findOne({ email });
+        if (!user) {
+            return res.status(400).json({ message: 'Invalid credentials' });
+        }
+
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) {
+            return res.status(400).json({ message: 'Invalid credentials' });
+        }
+
+        const { token, refreshToken } = generateTokens(user._id);
+
+        res.cookie('token', token, cookieOptions);
+        res.cookie('refreshToken', refreshToken, cookieOptions);
+
+        res.json({
+            user: {
+                id: user._id,
+                name: user.name,
+                email: user.email,
+                isProfileComplete: user.isProfileComplete,  // ye missing tha
+                isPaid: user.isPaid,
+                interviewCount: user.interviewCount
+            },
+            token,
+            refreshToken
+        });
+    } catch (err) {
+        logger.error(`Error logging in user ${req.user.id}: ${err.message}`);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+exports.logoutUser = async (req, res) => {
+    try {
+        const decoded = jwt.verify(req.token, config.JWT_SECRET);
+        const refreshToken = req.cookies?.refreshToken;
+
+        const blacklistOps = [
+            Blacklist.create({
+                token: req.token,
+                expiresAt: new Date(decoded.exp * 1000)
+            })
+        ];
+
+        if (refreshToken) {
+            const decodedRefresh = jwt.decode(refreshToken);
+            blacklistOps.push(
+                Blacklist.create({
+                    token: refreshToken,
+                    expiresAt: new Date(decodedRefresh.exp * 1000)
+                })
+            );
+        }
+
+        await Promise.all(blacklistOps);
+
+        res.clearCookie('token', cookieOptions);
+        res.clearCookie('refreshToken', cookieOptions);
+
+        res.json({ message: 'Logged out successfully.' });
+    } catch (error) {
+        logger.error(`Error logging out user ${req.user.id}: ${error.message}`);
+        res.status(500).json({ error: 'Logout failed.' });
+    }
+};
+
+// auth.controller.js mein getProfile
+exports.getProfile = async (req, res) => {
+    try {
+        const user = await userModel.findById(req.user.id)
+            .select('-password')
+            .populate('companies', 'name industry')  // ye add karo
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' })
+        }
+        res.json(user)
+    } catch (err) {
+        logger.error(`Error fetching profile for user ${req.user.id}: ${err.message}`);
+        res.status(500).json({ message: 'Server error' })
+    }
+}
+
+exports.refreshToken = async (req, res) => {
+    try {
+        const refreshToken = req.cookies?.refreshToken;
+        if (!refreshToken) {
+            return res.status(401).json({ message: 'No refresh token' });
+        }
+
+        // Blacklist check
+        const isBlacklisted = await Blacklist.findOne({ token: refreshToken });
+        if (isBlacklisted) {
+            return res.status(401).json({ message: 'Refresh token revoked' });
+        }
+
+        // Verify karo
+        const decoded = jwt.verify(refreshToken, config.JWT_REFRESH_SECRET);
+
+        // Naya access token banao
+        const newToken = jwt.sign({ id: decoded.id }, config.JWT_SECRET, { expiresIn: '1h' });
+
+        res.cookie('token', newToken, cookieOptions);
+        res.json({ token: newToken });
+
+    } catch (err) {
+        res.status(401).json({ message: 'Invalid refresh token' });
+    }
+};
+
+// auth.controller.js mein add karo
+exports.completeProfile = async (req, res) => {
+    try {
+        const { role, companies } = req.body;
+
+        // Agar pehle se complete hai toh block karo
+        console.log('User profile completion status:', req.user.isProfileComplete); // Debugging line
+        if (req.user.isProfileComplete) {
+            return res.status(400).json({
+                message: 'Profile already completed. Role and companies cannot be changed.'
+            });
+        }
+
+        // Validation
+        if (!role || !companies || companies.length === 0) {
+            return res.status(400).json({
+                message: 'Role and at least one company are required'
+            });
+        }
+
+        // Companies DB mein exist karti hain?
+        const validCompanies = await Company.find({ _id: { $in: companies } });
+        if (validCompanies.length !== companies.length) {
+            return res.status(400).json({
+                message: 'One or more companies are invalid'
+            });
+        }
+
+        const user = await userModel.findByIdAndUpdate(
+            req.user.id,
+            {
+                role,
+                companies,
+                isProfileComplete: true      // ab kabhi nahi badlega
+            },
+            { new: true }
+        ).select('-password');
+
+        res.json({
+            message: 'Profile completed successfully',
+            user
+        });
+
+    } catch (err) {
+        res.status(500).json({ message: 'Server error' });
+        logger.error(`Error completing profile for user ${req.user.id}: ${err.message}`);
+    }
+};
+
+exports.updatePassword = async (req, res) => {
+    try {
+        const { currentPassword, newPassword } = req.body
+        const user = await userModel.findById(req.user._id)
+
+        const isMatch = await bcrypt.compare(currentPassword, user.password)
+        if (!isMatch) {
+            return res.status(400).json({ message: 'Current password is incorrect' })
+        }
+
+        const salt = await bcrypt.genSalt(10)
+        user.password = await bcrypt.hash(newPassword, salt)
+        await user.save()
+
+        res.json({ message: 'Password updated successfully' })
+    } catch (err) {
+        res.status(500).json({ message: 'Server error' });
+        logger.error(`Error updating password for user ${req.user._id}: ${err.message}`);
+    }
+}
+
+exports.updateCompanies = async (req, res) => {
+    try {
+        const { companies } = req.body
+        const user = await userModel.findByIdAndUpdate(
+            req.user._id,
+            { companies },
+            { new: true }
+        ).select('-password').populate('companies', 'name industry')
+        res.json({ message: 'Companies updated', user })
+    } catch (err) {
+        res.status(500).json({ message: 'Server error' });
+        logger.error(`Error updating companies for user ${req.user._id}: ${err.message}`);
+    }
+}
+
+// auth.controller.js mein sirf ye rakho — pehla wala delete karo
+exports.updateProfile = async (req, res) => {
+    try {
+        const { name, jobPreference } = req.body
+        const user = await userModel.findByIdAndUpdate(
+            req.user._id,
+            { name, jobPreference },
+            { new: true }
+        ).select('-password').populate('companies', 'name industry')
+        res.json({ message: 'Profile updated', user })
+    } catch (err) {
+        res.status(500).json({ message: 'Server error' });
+        logger.error(`Error updating profile for user ${req.user._id}: ${err.message}`);
+    }
+}

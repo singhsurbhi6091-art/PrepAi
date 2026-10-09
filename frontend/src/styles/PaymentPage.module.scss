@@ -1,0 +1,376 @@
+// ═══════════════════════════════════════════════════════════
+// PaymentPage.module.scss — Dark Engineering Theme
+// ═══════════════════════════════════════════════════════════
+@use '../styles/variables' as *;
+@use '../styles/mixins' as *;
+
+// ─── Page ─────────────────────────────────────────────────────
+.page {
+    min-height: 100vh;
+    background: $bg-base;
+    @include flex-center;
+    padding: $spacing-xl $spacing-md;
+    position: relative;
+
+    // Corner accent glow
+    &::before {
+        content: '';
+        position: fixed;
+        top: -200px;
+        right: -200px;
+        width: 600px;
+        height: 600px;
+        background: radial-gradient(circle, rgba(0, 212, 170, 0.06), transparent 70%);
+        pointer-events: none;
+    }
+
+    &::after {
+        content: '';
+        position: fixed;
+        bottom: -200px;
+        left: -200px;
+        width: 500px;
+        height: 500px;
+        background: radial-gradient(circle, rgba(124, 111, 255, 0.05), transparent 70%);
+        pointer-events: none;
+    }
+}
+
+// ─── Grid Wrapper ─────────────────────────────────────────────
+.wrapper {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: $spacing-lg;
+    max-width: 880px;
+    width: 100%;
+    position: relative;
+    z-index: 1;
+
+    @include tablet {
+        grid-template-columns: 1fr;
+        max-width: 480px;
+    }
+}
+
+// ─── Card Base ────────────────────────────────────────────────
+.card {
+    @include card;
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-md;
+    animation: fadeInUp 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+.payCard {
+    @include card;
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-md;
+    animation: fadeInUp 0.5s cubic-bezier(0.4, 0, 0.2, 1) 0.1s both;
+
+    // Subtle violet accent on pay side
+    &::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        width: 120px;
+        height: 120px;
+        background: radial-gradient(circle at bottom right, rgba(124, 111, 255, 0.08), transparent);
+        border-radius: 0 0 $radius-xl 0;
+        pointer-events: none;
+    }
+}
+
+// ─── Plan Header ─────────────────────────────────────────────
+.planHeader {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-sm;
+}
+
+// ─── Most Popular Badge ───────────────────────────────────────
+.badge {
+    @include badge-tech;
+    background: rgba(0, 212, 170, 0.1);
+    color: $primary;
+    border-color: rgba(0, 212, 170, 0.3);
+    width: fit-content;
+
+    &::before { content: '● '; font-size: 0.5rem; opacity: 0.7; }
+}
+
+.planName {
+    font-size: $font-size-2xl;
+    font-weight: 800;
+    color: $text-primary;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+}
+
+.priceRow {
+    display: flex;
+    align-items: flex-start;
+    gap: 2px;
+    margin-top: $spacing-xs;
+}
+
+.currency {
+    font-family: $font-mono;
+    font-size: $font-size-xl;
+    font-weight: 600;
+    color: $primary;
+    margin-top: 10px;
+    opacity: 0.85;
+}
+
+.amount {
+    font-family: $font-display;
+    font-size: 4.5rem;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -4px;
+    background: linear-gradient(135deg, $primary 0%, #38bdf8 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.priceSub {
+    font-size: $font-size-xs;
+    color: $text-muted;
+    font-family: $font-mono;
+    letter-spacing: 0.04em;
+}
+
+// ─── Divider ─────────────────────────────────────────────────
+.divider {
+    border: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.07);
+    margin: 0;
+}
+
+// ─── Features ────────────────────────────────────────────────
+.featureList {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    padding: 0;
+}
+
+.featureItem {
+    display: flex;
+    align-items: center;
+    gap: $spacing-sm;
+    font-size: $font-size-sm;
+    color: $text-secondary;
+    padding: 0.35rem 0;
+    transition: $transition-fast;
+
+    // Checkmark indicator line
+    &::before {
+        content: '';
+        width: 3px;
+        height: 14px;
+        background: linear-gradient(180deg, $primary, transparent);
+        border-radius: 2px;
+        flex-shrink: 0;
+        opacity: 0.6;
+    }
+
+    &:hover {
+        color: $text-primary;
+        &::before { opacity: 1; }
+    }
+
+    .featureIcon {
+        font-size: 1rem;
+        width: 22px;
+        text-align: center;
+        flex-shrink: 0;
+    }
+}
+
+// ─── Free Plan Note ───────────────────────────────────────────
+.freePlanNote {
+    display: flex;
+    align-items: center;
+    gap: $spacing-sm;
+    font-size: $font-size-xs;
+    color: $text-muted;
+    font-family: $font-mono;
+}
+
+.freeTag {
+    @include badge-tech;
+    background: rgba(255, 255, 255, 0.05);
+    color: $text-muted;
+    border-color: rgba(255, 255, 255, 0.10);
+}
+
+// ─── Pay Card Content ─────────────────────────────────────────
+.payTitle {
+    font-size: $font-size-xl;
+    font-weight: 700;
+    color: $text-primary;
+    letter-spacing: -0.01em;
+}
+
+.paySubtitle {
+    font-size: $font-size-sm;
+    color: $text-muted;
+    line-height: 1.65;
+}
+
+// ─── Order Summary ────────────────────────────────────────────
+.orderSummary {
+    background: rgba(255, 255, 255, 0.025);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: $radius-md;
+    padding: $spacing-md;
+    display: flex;
+    flex-direction: column;
+    gap: 0.625rem;
+}
+
+.summaryRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: $font-size-sm;
+    color: $text-muted;
+}
+
+.included {
+    color: $primary;
+    font-weight: 500;
+    font-family: $font-mono;
+    font-size: $font-size-xs;
+}
+
+.totalRow {
+    font-size: $font-size-md;
+    font-weight: 700;
+    color: $text-primary;
+    padding-top: 0.25rem;
+}
+
+// ─── CTA Button ───────────────────────────────────────────────
+.btnPrimary {
+    @include btn-primary;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 0.9rem $spacing-lg;
+    font-size: $font-size-md;
+    font-weight: 700;
+    border-radius: $radius-md;
+}
+
+// ─── Loading Spinner ──────────────────────────────────────────
+.spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(4, 4, 7, 0.25);
+    border-top-color: $bg-base;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    flex-shrink: 0;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+// ─── Error Box ────────────────────────────────────────────────
+.errorBox {
+    background: rgba(248, 113, 113, 0.08);
+    color: #fca5a5;
+    border: 1px solid rgba(248, 113, 113, 0.25);
+    border-radius: $radius-md;
+    padding: $spacing-sm $spacing-md;
+    font-size: $font-size-sm;
+    line-height: 1.5;
+    font-family: $font-mono;
+}
+
+// ─── Secure Note ─────────────────────────────────────────────
+.secureNote {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 0.7rem;
+    color: $text-muted;
+    font-family: $font-mono;
+    letter-spacing: 0.02em;
+
+    svg { flex-shrink: 0; opacity: 0.6; }
+}
+
+// ─── Payment Methods ──────────────────────────────────────────
+.paymentMethods {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    flex-wrap: wrap;
+
+    span {
+        @include badge-tech;
+        background: rgba(255, 255, 255, 0.03);
+        color: $text-muted;
+        border-color: rgba(255, 255, 255, 0.08);
+        padding: 3px 10px;
+    }
+}
+
+// ─── Success State ────────────────────────────────────────────
+.successCard {
+    max-width: 440px;
+    width: 100%;
+    text-align: center;
+    align-items: center;
+    gap: $spacing-lg !important;
+    padding: $spacing-2xl !important;
+}
+
+.successIcon {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, $primary, #38bdf8);
+    color: $bg-base;
+    font-size: 1.75rem;
+    font-weight: 900;
+    @include flex-center;
+    box-shadow: 0 0 32px rgba(0, 212, 170, 0.5), 0 8px 24px rgba(0, 212, 170, 0.3);
+    animation: pulse-glow 2s ease-in-out infinite;
+
+    @keyframes pulse-glow {
+        0%, 100% { box-shadow: 0 0 32px rgba(0, 212, 170, 0.5), 0 8px 24px rgba(0, 212, 170, 0.3); }
+        50%       { box-shadow: 0 0 48px rgba(0, 212, 170, 0.7), 0 8px 32px rgba(0, 212, 170, 0.5); }
+    }
+}
+
+.successTitle {
+    font-size: $font-size-2xl;
+    font-weight: 800;
+    color: $text-primary;
+    letter-spacing: -0.02em;
+}
+
+.successSub {
+    font-size: $font-size-sm;
+    color: $text-muted;
+    line-height: 1.7;
+    max-width: 340px;
+}
+
+// ─── Keyframes ────────────────────────────────────────────────
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
